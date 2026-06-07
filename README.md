@@ -1,6 +1,5 @@
-[![Build status](https://ci.appveyor.com/api/projects/status/nbvaa55gu3icd1q8?svg=true)](https://ci.appveyor.com/project/oliverw/miningcore)
 [![.NET](https://github.com/soosho/miningcore/actions/workflows/dotnet.yml/badge.svg)](https://github.com/soosho/miningcore/actions/workflows/dotnet.yml)
-[![license](https://img.shields.io/github/license/mashape/apistatus.svg)]()
+[![license](https://img.shields.io/github/license/mashape/apistatus.svg)](LICENSE)
 
 <img src="https://github.com/soosho/miningcore/raw/master/logo.png" width="150">
 

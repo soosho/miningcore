@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
+using System.Collections.Frozen;
 using AspNetCoreRateLimit;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -163,7 +164,7 @@ public abstract partial class CoinTemplate
     /// Coin Family associciations
     /// </summary>
     [JsonIgnore]
-    public static readonly Dictionary<CoinFamily, Type> Families = new()
+    public static readonly FrozenDictionary<CoinFamily, Type> Families = new Dictionary<CoinFamily, Type>
     {
         {CoinFamily.Alephium, typeof(AlephiumCoinTemplate)},
         {CoinFamily.Beam, typeof(BeamCoinTemplate)},
@@ -181,7 +182,7 @@ public abstract partial class CoinTemplate
         {CoinFamily.Warthog, typeof(WarthogCoinTemplate)},
         {CoinFamily.Xelis, typeof(XelisCoinTemplate)},
         {CoinFamily.Zano, typeof(ZanoCoinTemplate)},
-    };
+    }.ToFrozenDictionary();
 }
 
 public partial class AlephiumCoinTemplate : CoinTemplate
