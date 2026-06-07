@@ -7,7 +7,9 @@
         "logFile": "",
         "apiLogFile": "",
         "logBaseDirectory": "",
-        "perPoolLogFile": false
+        "perPoolLogFile": false,
+
+        "otlpEndpoint": ""
     },
     "banning": {
         "manager": "Integrated",
