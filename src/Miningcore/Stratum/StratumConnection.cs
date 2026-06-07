@@ -386,10 +386,9 @@ public class StratumConnection
         if(request == null)
             throw new Newtonsoft.Json.JsonException("Unable to deserialize request");
 
-        // Trace span — zero overhead when sampling is off (AlwaysOffSampler returns null immediately)
-        using var activity = MiningcoreTelemetry.ActivitySource.HasListeners()
-            ? MiningcoreTelemetry.ActivitySource.StartActivity("stratum.request")
-            : null;
+        // Trace span — StartActivity returns null immediately when no OTel SDK is
+        // registered (zero overhead). When OTel SDK is present, it handles sampling.
+        using var activity = MiningcoreTelemetry.ActivitySource.StartActivity("stratum.request");
         activity?.SetTag("stratum.method", request.Method);
         activity?.SetTag("stratum.connection_id", ConnectionId);
 
