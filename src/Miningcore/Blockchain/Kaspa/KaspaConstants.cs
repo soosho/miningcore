@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using System.Globalization;
 using System.Numerics;
 using System.Text.RegularExpressions;
@@ -38,12 +39,12 @@ public static class KaspaConstants
     public const byte PubKeyAddrID = 0x00;
     public const byte PubKeyECDSAAddrID = 0x01;
     public const byte ScriptHashAddrID = 0x08;
-    public static readonly Dictionary<byte, string> KaspaAddressType = new Dictionary<byte, string>
+    public static readonly FrozenDictionary<byte, string> KaspaAddressType = new Dictionary<byte, string>
     {
         { PubKeyAddrID, "Public Key Address" },
         { PubKeyECDSAAddrID, "Public Key ECDSA Address" },
         { ScriptHashAddrID, "Script Hash Address" },
-    };
+    }.ToFrozenDictionary();
     public const int PublicKeySize = 32;
     public const int PublicKeySizeECDSA = 33;
     public const int Blake2bSize256 = 32;

@@ -4,16 +4,10 @@ using Miningcore.Rest;
 
 namespace Miningcore.Pushover;
 
-public class PushoverClient
+public class PushoverClient(ClusterConfig clusterConfig, IHttpClientFactory httpClientFactory)
 {
-    public PushoverClient(ClusterConfig clusterConfig, IHttpClientFactory httpClientFactory)
-    {
-        config = clusterConfig?.Notifications?.Pushover;
-        client = new SimpleRestClient(httpClientFactory, PushoverConstants.ApiBaseUrl);
-    }
-
-    private readonly SimpleRestClient client;
-    private readonly PushoverConfig config;
+    private readonly SimpleRestClient client = new(httpClientFactory, PushoverConstants.ApiBaseUrl);
+    private readonly PushoverConfig config = clusterConfig?.Notifications?.Pushover;
 
     public async Task<PushoverReponse> PushMessage(string title, string message,
         PushoverMessagePriority priority, CancellationToken ct)

@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using Miningcore.Blockchain.Conceal.DaemonResponses;
 using Miningcore.Configuration;
 using Miningcore.Extensions;
@@ -31,11 +32,11 @@ public class ConcealJob
 
     protected delegate void HashFunc(ReadOnlySpan<byte> data, Span<byte> result, ulong height);
 
-    protected static readonly Dictionary<CryptonightHashType, HashFunc> hashFuncs = new()
+    protected static readonly FrozenDictionary<CryptonightHashType, HashFunc> hashFuncs = new Dictionary<CryptonightHashType, HashFunc>
     {
         { CryptonightHashType.CryptonightCCX, (data, result, height) => Cryptonight.CryptonightHash(data, result, CN_CCX, height) },
         { CryptonightHashType.CryptonightGPU, (data, result, height) => Cryptonight.CryptonightHash(data, result, CN_GPU, height) },
-    };
+    }.ToFrozenDictionary();
 
     private byte[] blobTemplate;
     private int extraNonce;

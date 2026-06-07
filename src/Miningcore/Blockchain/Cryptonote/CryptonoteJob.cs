@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using Miningcore.Blockchain.Cryptonote.DaemonResponses;
 using Miningcore.Configuration;
 using Miningcore.Extensions;
@@ -32,7 +33,7 @@ public class CryptonoteJob
 
     protected delegate void HashFunc(string realm, string seedHex, ReadOnlySpan<byte> data, Span<byte> result, ulong height);
 
-    protected static readonly Dictionary<CryptonightHashType, HashFunc> hashFuncs = new()
+    protected static readonly FrozenDictionary<CryptonightHashType, HashFunc> hashFuncs = new Dictionary<CryptonightHashType, HashFunc>
     {
         { CryptonightHashType.RandomX, (realm, seedHex, data, result, _) => RandomX.CalculateHash(realm, seedHex, data, result) },
         { CryptonightHashType.RandomARQ, (realm, seedHex, data, result, _) => RandomARQ.CalculateHash(realm, seedHex, data, result) },
@@ -62,7 +63,7 @@ public class CryptonoteJob
         { CryptonightHashType.ArgonCHUKWA, (_, _, data, result, height) => Cryptonight.CryptonightHash(data, result, AR2_CHUKWA, height) },
         { CryptonightHashType.ArgonCHUKWAV2, (_, _, data, result, height) => Cryptonight.CryptonightHash(data, result, AR2_CHUKWA_V2, height) },
         { CryptonightHashType.ArgonWRKZ, (_, _, data, result, height) => Cryptonight.CryptonightHash(data, result, AR2_WRKZ, height) },
-    };
+    }.ToFrozenDictionary();
 
     private byte[] blobTemplate;
     private int extraNonce;

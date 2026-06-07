@@ -398,7 +398,7 @@ public class StratumConnection
         {
             var proxyAddresses = proxyProtocol.ProxyAddresses?.Select(IPAddress.Parse).ToArray();
             if(proxyAddresses == null || !proxyAddresses.Any())
-                proxyAddresses = new[] { IPAddress.Loopback, IPUtils.IPv4LoopBackOnIPv6, IPAddress.IPv6Loopback };
+                proxyAddresses = [IPAddress.Loopback, IPUtils.IPv4LoopBackOnIPv6, IPAddress.IPv6Loopback];
 
             if(proxyAddresses.Any(x => x.Equals(peerAddress)))
             {

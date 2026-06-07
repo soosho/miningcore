@@ -1,5 +1,5 @@
-﻿{
-    "$schema": "https://raw.githubusercontent.com/oliverw/miningcore/master/src/Miningcore/config.schema.json",
+{
+    "$schema": "https://raw.githubusercontent.com/soosho/miningcore/master/src/Miningcore/config.schema.json",
     "logging": {
         "level": "info",
         "enableConsoleLog": true,

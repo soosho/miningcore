@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Collections.Frozen;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Miningcore.Contracts;
@@ -82,7 +83,7 @@ public static unsafe class Cryptonight
 
     internal static IMessageBus messageBus;
 
-    private static readonly HashSet<Algorithm> validCryptonightAlgos = new()
+    private static readonly FrozenSet<Algorithm> validCryptonightAlgos = new HashSet<Algorithm>
     {
         Algorithm.CN_0,
         Algorithm.CN_1,
@@ -99,33 +100,33 @@ public static unsafe class Cryptonight
         Algorithm.CN_CCX,
         Algorithm.GHOSTRIDER_RTM,
         Algorithm.GHOSTRIDER_MIKE,
-    };
+    }.ToFrozenSet();
 
-    private static readonly HashSet<Algorithm> validCryptonightLiteAlgos = new()
+    private static readonly FrozenSet<Algorithm> validCryptonightLiteAlgos = new HashSet<Algorithm>
     {
         Algorithm.CN_LITE_0,
         Algorithm.CN_LITE_1,
-    };
+    }.ToFrozenSet();
 
-    private static readonly HashSet<Algorithm> validCryptonightHeavyAlgos = new()
+    private static readonly FrozenSet<Algorithm> validCryptonightHeavyAlgos = new HashSet<Algorithm>
     {
         Algorithm.CN_HEAVY_0,
         Algorithm.CN_HEAVY_XHV,
         Algorithm.CN_HEAVY_TUBE,
-    };
+    }.ToFrozenSet();
 
-    private static readonly HashSet<Algorithm> validCryptonightPicoAlgos = new()
+    private static readonly FrozenSet<Algorithm> validCryptonightPicoAlgos = new HashSet<Algorithm>
     {
         Algorithm.CN_PICO_0,
         Algorithm.CN_PICO_TLO,
-    };
+    }.ToFrozenSet();
 
-    private static readonly HashSet<Algorithm> validArgonAlgos = new()
+    private static readonly FrozenSet<Algorithm> validArgonAlgos = new HashSet<Algorithm>
     {
         Algorithm.AR2_WRKZ,
         Algorithm.AR2_CHUKWA,
         Algorithm.AR2_CHUKWA_V2,
-    };
+    }.ToFrozenSet();
 
     #region Context managment
 

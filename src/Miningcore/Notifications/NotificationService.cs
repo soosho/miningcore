@@ -15,33 +15,18 @@ using static Miningcore.Util.ActionUtils;
 
 namespace Miningcore.Notifications;
 
-public class NotificationService : BackgroundService
+public class NotificationService(
+    ClusterConfig clusterConfig,
+    PushoverClient pushoverClient,
+    IMessageBus messageBus) : BackgroundService
 {
-    public NotificationService(
-        ClusterConfig clusterConfig,
-        PushoverClient pushoverClient,
-        IMessageBus messageBus)
-    {
-        Contract.RequiresNonNull(clusterConfig);
-        Contract.RequiresNonNull(messageBus);
-
-        this.clusterConfig = clusterConfig;
-        emailSenderConfig = clusterConfig.Notifications?.Email;
-        this.messageBus = messageBus;
-        this.pushoverClient = pushoverClient;
-
-        poolConfigs = clusterConfig.Pools.ToDictionary(x => x.Id, x => x);
-
-        adminEmail = clusterConfig.Notifications?.Admin?.EmailAddress;
-    }
-
     private readonly ILogger logger = LogManager.GetCurrentClassLogger();
-    private readonly ClusterConfig clusterConfig;
-    private readonly Dictionary<string, PoolConfig> poolConfigs;
-    private readonly string adminEmail;
-    private readonly IMessageBus messageBus;
-    private readonly EmailSenderConfig emailSenderConfig;
-    private readonly PushoverClient pushoverClient;
+    private readonly ClusterConfig clusterConfig = clusterConfig ?? throw new ArgumentNullException(nameof(clusterConfig));
+    private readonly IMessageBus messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
+    private readonly PushoverClient pushoverClient = pushoverClient;
+    private readonly Dictionary<string, PoolConfig> poolConfigs = (clusterConfig ?? throw new ArgumentNullException(nameof(clusterConfig))).Pools.ToDictionary(x => x.Id, x => x);
+    private readonly string adminEmail = clusterConfig.Notifications?.Admin?.EmailAddress;
+    private readonly EmailSenderConfig emailSenderConfig = clusterConfig.Notifications?.Email;
 
     public string FormatAmount(decimal amount, string poolId)
     {

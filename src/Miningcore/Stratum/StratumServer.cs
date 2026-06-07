@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Collections.Frozen;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
@@ -53,7 +54,7 @@ public abstract class StratumServer
                 (int) SocketError.ConnectionReset,
                 (int) SocketError.ConnectionAborted,
                 (int) SocketError.OperationAborted
-            };
+            }.ToFrozenSet();
         }
 
         else if(RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
@@ -66,13 +67,18 @@ public abstract class StratumServer
                 103, // ECONNABORTED
                 110, // ETIMEDOUT
                 32,  // EPIPE
-            };
+            }.ToFrozenSet();
+        }
+
+        else
+        {
+            ignoredSocketErrors = FrozenSet<int>.Empty;
         }
     }
 
     protected readonly ConcurrentDictionary<string, StratumConnection> connections = new();
     protected static readonly ConcurrentDictionary<string, X509Certificate2> certs = new();
-    protected static readonly HashSet<int> ignoredSocketErrors;
+    protected static readonly FrozenSet<int> ignoredSocketErrors;
 
     protected static readonly MethodBase streamWriterCtor = typeof(StreamWriter).GetConstructor(
         new[] { typeof(Stream), typeof(Encoding), typeof(int), typeof(bool) });
