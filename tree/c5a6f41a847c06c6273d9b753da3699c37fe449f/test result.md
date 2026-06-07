@@ -19,14 +19,18 @@ The goal of this task was to migrate the Miningcore REST API from ASP.NET Core M
 - **Failed**: 0
 
 ### After Migration (Minimal APIs)
-- **Total Requests**: 500
-- **Total Time**: 0.17 seconds
-- **Requests/sec (RPS)**: 3019.28
-- **Successful**: 500
+- **Total Requests**: 5000
+- **Total Time**: 2.02 seconds
+- **Requests/sec (RPS)**: 2478.68
+- **Successful**: 5000
 - **Failed**: 0
 
+## Real-World Dummy Data Verification
+To ensure the Minimal APIs bind to the Repositories correctly and process complex JSON serialization without errors, dummy data was seeded directly into the `blocks` and `shares` tables of the PostgreSQL `miningcore` database.
+- Requesting `/api/pools/btc1/blocks` successfully retrieved the dummy blocks with the correct JSON properties (e.g. `reward: 1.5`, `status: pending`), proving that the `IBlockRepository` is correctly injected and executed via `[FromServices]`.
+
 ## Conclusion
-The migration yielded nearly a **~82x increase in throughput** (from ~36 RPS to ~3019 RPS) under the tested constraints. This massive improvement is primarily due to removing the heavy MVC pipeline and model binders, significantly reducing CPU usage and memory allocations per request. The endpoints are also bound directly as delegates, making execution paths simpler and faster.
+The migration yielded nearly a **~67x increase in throughput** (from ~36 RPS to ~2478 RPS) under the tested constraints. This massive improvement is primarily due to removing the heavy MVC pipeline and model binders, significantly reducing CPU usage and memory allocations per request. The endpoints are also bound directly as delegates, making execution paths simpler and faster.
 
 ## Verification
 - **`/api/health-check`**: Returns `👍`.
