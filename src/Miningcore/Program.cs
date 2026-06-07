@@ -633,22 +633,18 @@ public class Program : BackgroundService
  ▒███      ▒███ ▒▒███     ███▒▒███     ███ ▒███ ▒   █
  █████     █████ ▒▒█████████  ▒▒█████████  ██████████
 ▒▒▒▒▒     ▒▒▒▒▒   ▒▒▒▒▒▒▒▒▒    ▒▒▒▒▒▒▒▒▒  ▒▒▒▒▒▒▒▒▒▒ 
-
-Miningcore Community Edition
-Miningcore Community Edition (MCCE) is a modernized, actively maintained continuation of Miningcore.
-It features full support for .NET 8 and Ubuntu 24.04, offering better performance and stability compared to the original Oliverw Miningcore repository (which has been outdated, discontinued, and archived since 2022)
-
-https://github.com/soosho/miningcore
-
-Donation:
-btc: 1AqqFf13RcfGbwa4GQGQV27T6HL1r35WVk
-bch: 1AqqFf13RcfGbwa4GQGQV27T6HL1r35WVk
-eth: 0xbd9bf193bf6ba5bf0dc25418e96082580fb9498f
-bnb: 0xbd9bf193bf6ba5bf0dc25418e96082580fb9498f
-ltc: La2a5YZH3dDJh1L8tTRKk3zz2zUwtYfeHj
-doge: DCMuGWx62HoW6mKVsvfkvuqqqYpsWevfod
 ");
-        Console.WriteLine();
+        Console.WriteLine("Miningcore Community Edition");
+        Console.WriteLine("Miningcore Community Edition (MCCE) is a modernized, actively maintained continuation of Miningcore.");
+        Console.WriteLine("It features full support for .NET 8 and Ubuntu 24.04, offering better performance and stability compared to the original Oliverw Miningcore repository (which has been outdated, discontinued, and archived since 2022)\n");
+        Console.WriteLine("https://github.com/soosho/miningcore\n");
+        Console.WriteLine("Donation:");
+        Console.WriteLine("btc: 1AqqFf13RcfGbwa4GQGQV27T6HL1r35WVk");
+        Console.WriteLine("bch: 1AqqFf13RcfGbwa4GQGQV27T6HL1r35WVk");
+        Console.WriteLine("eth: 0xbd9bf193bf6ba5bf0dc25418e96082580fb9498f");
+        Console.WriteLine("bnb: 0xbd9bf193bf6ba5bf0dc25418e96082580fb9498f");
+        Console.WriteLine("ltc: La2a5YZH3dDJh1L8tTRKk3zz2zUwtYfeHj");
+        Console.WriteLine("doge: DCMuGWx62HoW6mKVsvfkvuqqqYpsWevfod\n");
     }
 
     private static void ConfigureLogging()
