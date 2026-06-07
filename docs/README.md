@@ -26,6 +26,7 @@ MCCE is a modernized, actively maintained fork of [Miningcore](https://github.co
   - [OpenTelemetry Tracing + NLog Async](optimizations/03-opentelemetry-nlog-async.md)
 - **Features:**
   - [Auto Share Table Partitioning](features/auto-partitioning.md)
+  - [DB Index Improvements](features/db-indexes.md)
 - **Benchmarks:**
   - [Stratum Processing](benchmarks/stratum-comparison.md)
   - [API Throughput](benchmarks/api-comparison.md)

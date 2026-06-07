@@ -14,9 +14,27 @@ CREATE TABLE shares
 	created TIMESTAMPTZ NOT NULL
 );
 
+-- Core index: pool + miner lookups (authorized miner check, miner stats)
 CREATE INDEX IDX_SHARES_POOL_MINER on shares(poolid, miner);
-CREATE INDEX IDX_SHARES_POOL_CREATED ON shares(poolid, created);
+
+-- Time-range queries: effort calculation, cleanup, stats aggregation
+CREATE INDEX IDX_SHARES_POOL_CREATED on shares(poolid, created);
+
+-- Per-miner difficulty lookups
 CREATE INDEX IDX_SHARES_POOL_MINER_DIFFICULTY on shares(poolid, miner, difficulty);
+
+-- ORDER BY created DESC queries (read recent shares, last share lookups)
+CREATE INDEX IDX_SHARES_POOL_CREATED_DESC on shares(poolid, created DESC);
+
+-- Per-miner time history queries
+CREATE INDEX IDX_SHARES_POOL_MINER_CREATED on shares(poolid, miner, created);
+
+-- Hash accumulation queries (miner+worker stats per time window)
+CREATE INDEX IDX_SHARES_POOL_MINER_WORKER_CREATED on shares(poolid, miner, worker, created);
+
+-- BRIN index: tiny footprint (~100x smaller than B-tree), fast for large time-range scans
+CREATE INDEX IDX_SHARES_CREATED_BRIN on shares USING BRIN(created) WITH (pages_per_range = 32);
+
 
 CREATE TABLE blocks
 (
@@ -28,7 +46,7 @@ CREATE TABLE blocks
     type TEXT NULL,
     confirmationprogress FLOAT NOT NULL DEFAULT 0,
 	effort FLOAT NULL,
-        minereffort FLOAT NULL,
+    minereffort FLOAT NULL,
 	transactionconfirmationdata TEXT NOT NULL,
 	miner TEXT NULL,
 	reward decimal(28,12) NULL,

@@ -1,5 +1,14 @@
 # Changelog
 
+## June 2026 — Missing DB indexes added
+
+Added 4 indexes on the `shares` table to fix slow queries: `(poolid, created DESC)` for ordering,
+`(poolid, miner, created)` for per-miner time history, `(poolid, miner, worker, created)` for hash accumulation, and a `BRIN(created)` index that's 100x smaller than a B-tree for large time-range scans.
+Updated both `createdb.sql` and `createdb_postgresql_11_appendix.sql` so new setups get them automatically.
+Existing users can run `migrate_add_indexes.sql`
+
+See: [Feature: DB Index Improvements](features/db-indexes.md)
+
 ## June 2026 — Automated share table partitioning
 
 When the `shares` table is partitioned by `poolId`, miningcore now creates the partition for each pool automatically on startup. No more manual SQL every time you add a pool — just add it to `config.json` and restart. Skips silently if the table isn't partitioned (plain `createdb.sql` setup) or if the partition already exists.
