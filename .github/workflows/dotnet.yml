@@ -17,14 +17,21 @@ jobs:
       with:
         fetch-depth: 0    
     - name: Install Build dependencies
-      run: sudo apt-get install -y cmake cmake ninja-build build-essential libssl-dev pkg-config libboost-all-dev libsodium-dev libzmq5 libgmp-dev
+      run: sudo apt-get update && sudo apt-get install -y git cmake clang ninja-build build-essential libssl-dev pkg-config libboost-all-dev libsodium-dev libzmq5 libgmp-dev libc++-dev zlib1g-dev
     - name: Setup .NET
       uses: actions/setup-dotnet@v2
       with:
         dotnet-version: 8.0.x
+    - name: Build native libraries
+      run: |
+        cd src/Miningcore
+        mkdir -p bin/Debug/net8.0
+        chmod +x build-libs-linux.sh ../Native/check_cpu.sh
+        ./build-libs-linux.sh bin/Debug/net8.0/
     - name: Restore dependencies
       run: dotnet restore src
     - name: Build
       run: dotnet build --no-restore src
     - name: Test
       run: dotnet test --logger:"console;verbosity=detailed" --no-build --verbosity normal src
+
