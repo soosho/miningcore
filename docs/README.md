@@ -27,6 +27,7 @@ MCCE is a modernized, actively maintained fork of [Miningcore](https://github.co
 - **Features:**
   - [Auto Share Table Partitioning](features/auto-partitioning.md)
   - [DB Index Improvements](features/db-indexes.md)
+  - [Built-in Admin Panel](features/admin-panel.md)
 - **Benchmarks:**
   - [Stratum Processing](benchmarks/stratum-comparison.md)
   - [API Throughput](benchmarks/api-comparison.md)

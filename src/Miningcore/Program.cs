@@ -21,6 +21,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IO;
 using Miningcore.Api;
+using Miningcore.Api.AdminPanel;
 using Miningcore.Api.Middlewares;
 using Miningcore.Api.Responses;
 using Miningcore.Configuration;
@@ -237,10 +238,13 @@ public class Program : BackgroundService
 
                         app.UseMiddleware<ApiRequestMetricsMiddleware>();
 
+                        AdminPanelEndpoints.UseAdminPanelAuth(app, clusterConfig);
+
                         app.UseRouting();
                         app.UseEndpoints(endpoints =>
                         {
                             endpoints.MapMiningcoreApi();
+                            endpoints.MapAdminPanel(clusterConfig);
                         });
                     });
 

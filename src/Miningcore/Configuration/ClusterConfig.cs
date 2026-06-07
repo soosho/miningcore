@@ -924,6 +924,38 @@ public partial class ClusterLoggingConfig
     public string OtlpEndpoint { get; set; }
 }
 
+public partial class AdminPanelConfig
+{
+    /// <summary>
+    /// Enable the web-based admin dashboard
+    /// </summary>
+    public bool Enabled { get; set; }
+
+    /// <summary>
+    /// Password required to access the admin panel.
+    /// Leave empty to disable password auth (rely on IP whitelist only)
+    /// </summary>
+    public string Password { get; set; }
+
+    /// <summary>
+    /// How long a session lasts before requiring re-login (seconds)
+    /// Default: 3600 (1 hour)
+    /// </summary>
+    public int SessionTimeout { get; set; } = 3600;
+
+    /// <summary>
+    /// Max failed login attempts from one IP before temporary ban
+    /// Default: 5
+    /// </summary>
+    public int MaxLoginAttempts { get; set; } = 5;
+
+    /// <summary>
+    /// Duration of the login ban after too many failed attempts (seconds)
+    /// Default: 300 (5 minutes)
+    /// </summary>
+    public int LoginBanDuration { get; set; } = 300;
+}
+
 public partial class NetworkEndpointConfig
 {
     public string Host { get; set; }
@@ -1407,6 +1439,7 @@ public partial class ClusterConfig
     public Statistics Statistics { get; set; }
     public NicehashClusterConfig Nicehash { get; set; }
     public ClusterMemoryConfig Memory { get; set; }
+    public AdminPanelConfig AdminPanel { get; set; }
 
     /// <summary>
     /// If this is enabled, shares are not written to the database

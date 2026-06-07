@@ -1,5 +1,11 @@
 # Changelog
 
+## June 2026 — Built-in web admin panel
+
+Added a password-protected web dashboard served by miningcore itself. Overview, pools, miners, blocks, and settings tabs. HMAC-signed cookies for auth, login attempt tracking with IP ban, configurable timeout. No separate server needed — just enable it in config.json and go to /admin/login. Built to be extensible with a modular tab system for future controls.
+
+See: [Feature: Admin Panel](features/admin-panel.md)
+
 ## June 2026 — Missing DB indexes added
 
 Added 4 indexes on the `shares` table to fix slow queries: `(poolid, created DESC)` for ordering,
