@@ -1,5 +1,11 @@
 # Changelog
 
+## June 2026 — OpenTelemetry tracing + NLog async wrappers
+
+Added OpenTelemetry distributed tracing with OTLP export support. Set the `OTEL_EXPORTER_OTLP_ENDPOINT` env var to pipe traces to Jaeger/Grafana Tempo/any OTel collector. When unset, `AlwaysOffSampler` ensures zero overhead — no spans created, no allocations. Traced the stratum request pipeline. Also wrapped all NLog `FileTarget` instances with `AsyncTargetWrapper` (queue limit 10k, overflow discard, batch 100/200ms) to prevent threadpool starvation from slow disk writes during high-volume logging.
+
+See: [Optimization: OpenTelemetry + NLog Async](optimizations/03-opentelemetry-nlog-async.md)
+
 ## June 2026 — Stratum JSON parsing optimization
 
 Swapped Newtonsoft.Json deserialization in the stratum request pipeline to `System.Text.Json.Utf8JsonReader`, reading directly from `ReadOnlySequence<byte>` off the pipe without intermediate string allocations. Also switched `SendMessage` to use `RecyclableMemoryStream` instead of `StringBuilder` → `string` → `byte[]`. Added `TieredPGO`, `OptimizationPreference=Speed`, `InvariantGlobalization` compiler flags, and `[MethodImpl(AggressiveOptimization|AggressiveInlining)]` on the four hottest methods.
