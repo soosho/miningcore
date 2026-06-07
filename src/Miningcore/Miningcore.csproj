@@ -7,6 +7,9 @@
         <ServerGarbageCollection>true</ServerGarbageCollection>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <ImplicitUsings>true</ImplicitUsings>
+        <TieredPGO>true</TieredPGO>
+        <OptimizationPreference>Speed</OptimizationPreference>
+        <InvariantGlobalization>true</InvariantGlobalization>
     </PropertyGroup>
 
     <PropertyGroup>

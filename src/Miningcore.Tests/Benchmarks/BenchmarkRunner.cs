@@ -17,7 +17,7 @@ public class Benchmarks
         this.output = output;
     }
 
-    [Fact(Skip = "** Uncomment me to run benchmarks **")]
+    [Fact]
     public void Run_Benchmarks()
     {
         var logger = new AccumulationLogger();

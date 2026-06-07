@@ -1,3 +1,6 @@
+using System.Buffers;
+using System.Collections.Generic;
+using System.Text.Json;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -49,6 +52,58 @@ public class JsonRpcRequest<T>
         if(Params is JToken token)
             return token.ToObject<TParam>();
 
+        if(Params is ReadOnlySequence<byte> ros)
+            return FastDeserializeParams<TParam>(ros);
+
         return (TParam) Params;
+    }
+
+    private static TParam FastDeserializeParams<TParam>(ReadOnlySequence<byte> ros) where TParam : class
+    {
+        // For string arrays (most common stratum param type: ["worker", "password"])
+        if(typeof(TParam) == typeof(string[]))
+        {
+            var list = new List<string>();
+
+            if(ros.IsSingleSegment)
+            {
+                var reader = new System.Text.Json.Utf8JsonReader(ros.First.Span);
+                if(reader.Read() && reader.TokenType == JsonTokenType.StartArray)
+                {
+                    while(reader.Read() && reader.TokenType != JsonTokenType.EndArray)
+                    {
+                        if(reader.TokenType == JsonTokenType.String)
+                            list.Add(reader.GetString());
+                        else if(reader.TokenType == JsonTokenType.Number)
+                            list.Add(System.Text.Encoding.UTF8.GetString(reader.ValueSpan));
+                        else if(reader.TokenType == JsonTokenType.Null)
+                            list.Add(null);
+                    }
+                }
+            }
+            else
+            {
+                var arr = ros.ToArray();
+                var reader = new System.Text.Json.Utf8JsonReader(arr);
+                if(reader.Read() && reader.TokenType == JsonTokenType.StartArray)
+                {
+                    while(reader.Read() && reader.TokenType != JsonTokenType.EndArray)
+                    {
+                        if(reader.TokenType == JsonTokenType.String)
+                            list.Add(reader.GetString());
+                        else if(reader.TokenType == JsonTokenType.Number)
+                            list.Add(System.Text.Encoding.UTF8.GetString(reader.ValueSpan));
+                        else if(reader.TokenType == JsonTokenType.Null)
+                            list.Add(null);
+                    }
+                }
+            }
+
+            return list.ToArray() as TParam;
+        }
+
+        // Fallback: deserialize from bytes using System.Text.Json
+        var bytes = ros.ToArray();
+        return System.Text.Json.JsonSerializer.Deserialize<TParam>(bytes);
     }
 }

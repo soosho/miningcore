@@ -25,13 +25,14 @@ jobs:
     - name: Build native libraries
       run: |
         cd src/Miningcore
-        mkdir -p bin/Debug/net8.0
+        mkdir -p bin/Release/net8.0
         chmod +x build-libs-linux.sh ../Native/check_cpu.sh
-        ./build-libs-linux.sh bin/Debug/net8.0/
+        ./build-libs-linux.sh bin/Release/net8.0/
     - name: Restore dependencies
       run: dotnet restore src
     - name: Build
-      run: dotnet build --no-restore src
+      run: dotnet build -c Release --no-restore src
     - name: Test
-      run: dotnet test --logger:"console;verbosity=detailed" --no-build --verbosity normal src
+      run: dotnet test -c Release --logger:"console;verbosity=detailed" --no-build --verbosity normal src
+
 

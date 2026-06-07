@@ -7,9 +7,11 @@ using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
+using System.Runtime.CompilerServices;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks.Dataflow;
 using Microsoft.IO;
 using Miningcore.Configuration;
@@ -60,7 +62,7 @@ public class StratumConnection
     private bool expectingProxyHeader;
     private bool gpdrCompliantLogging;
 
-    private static readonly JsonSerializer serializer = new()
+    private static readonly Newtonsoft.Json.JsonSerializer serializer = new()
     {
         ContractResolver = new CamelCasePropertyNamesContractResolver()
     };
@@ -346,42 +348,223 @@ public class StratumConnection
 
     private async Task SendMessage(object msg, CancellationToken ct)
     {
-        await using var stream = rmsm.GetStream(nameof(StratumConnection)) as RecyclableMemoryStream;
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        cts.CancelAfter(sendTimeout);
 
-        // serialize
-        await using (var writer = new StreamWriter(stream!, Encoding, -1, true))
+        using var stream = rmsm.GetStream("stratum-send");
+        using(var writer = new StreamWriter(stream, Encoding, 256, true))
         {
             serializer.Serialize(writer, msg);
         }
 
-        logger.Debug(() => $"[{ConnectionId}] Sending: {Encoding.GetString(stream.GetReadOnlySequence())}");
-
-        // append newline
         stream.WriteByte((byte) '\n');
 
-        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        cts.CancelAfter(sendTimeout);
+        logger.Debug(() =>
+        {
+            stream.Position = 0;
+            using var sr = new StreamReader(stream, Encoding, false, 256, true);
+            var json = sr.ReadToEnd();
+            return $"[{ConnectionId}] Sending: {json.TrimEnd()}";
+        });
 
-        // send
         stream.Position = 0;
         await stream.CopyToAsync(networkStream, cts.Token);
         await networkStream.FlushAsync(cts.Token);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private async Task ProcessRequestAsync(
         CancellationToken ct,
         Func<StratumConnection, JsonRpcRequest, CancellationToken, Task> onRequestAsync,
         ReadOnlySequence<byte> lineBuffer)
     {
-        await using var stream = rmsm.GetStream(nameof(StratumConnection), lineBuffer.ToSpan()) as RecyclableMemoryStream;
-        using var reader = new JsonTextReader(new StreamReader(stream!, Encoding));
-
-        var request = serializer.Deserialize<JsonRpcRequest>(reader);
+        // Fast path: parse directly from bytes using Utf8JsonReader (no string allocations)
+        var request = FastParseRequest(lineBuffer);
 
         if(request == null)
-            throw new JsonException("Unable to deserialize request");
+            throw new Newtonsoft.Json.JsonException("Unable to deserialize request");
 
         await onRequestAsync(this, request, ct);
+    }
+
+    /// <summary>
+    /// Fast JSON-RPC request parser using Utf8JsonReader.
+    /// Avoids string, StringReader, and JsonTextReader allocations.
+    /// Extracts method/id/params and wraps them in a Newtonsoft-compatible JsonRpcRequest.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    private static JsonRpcRequest FastParseRequest(ReadOnlySequence<byte> lineBuffer)
+    {
+        // Trim to JSON object boundaries: skip leading chars until '{', find matching '}'
+        var jsonSlice = TrimToJsonObject(lineBuffer);
+        if(jsonSlice.Length == 0) return null;
+
+        string method = null;
+        object id = null;
+        ReadOnlySequence<byte> paramsSlice = default;
+        ReadOnlySequence<byte> rawParams = default;
+
+        if(jsonSlice.IsSingleSegment)
+        {
+            var span = jsonSlice.First.Span;
+            var reader = new Utf8JsonReader(span);
+
+            while(reader.Read())
+            {
+                if(reader.TokenType == JsonTokenType.PropertyName)
+                {
+                    var nameLength = reader.ValueSpan.Length;
+
+                    if(nameLength == 6)
+                    {
+                        // could be "method" or "params"
+                        var firstChar = reader.ValueSpan[0];
+                        if(firstChar == (byte) 'm') // "method"
+                        {
+                            reader.Read();
+                            if(reader.TokenType == JsonTokenType.String)
+                                method = reader.GetString();
+                        }
+                        else if(firstChar == (byte) 'p') // "params"
+                        {
+                            reader.Read();
+                            var start = (int) reader.TokenStartIndex;
+                            reader.Skip();
+                            var end = (int) reader.TokenStartIndex;
+                            paramsSlice = jsonSlice.Slice(start, end - start);
+                        }
+                    }
+                    else if(nameLength == 2) // "id"
+                    {
+                        reader.Read();
+                        id = ReadJsonRpcId(ref reader);
+                    }
+                }
+            }
+        }
+        else
+        {
+            var arr = jsonSlice.ToArray();
+            var reader = new Utf8JsonReader(arr);
+
+            while(reader.Read())
+            {
+                if(reader.TokenType == JsonTokenType.PropertyName)
+                {
+                    var nameLength = reader.ValueSpan.Length;
+
+                    if(nameLength == 6)
+                    {
+                        var firstChar = reader.ValueSpan[0];
+                        if(firstChar == (byte) 'm')
+                        {
+                            reader.Read();
+                            if(reader.TokenType == JsonTokenType.String)
+                                method = reader.GetString();
+                        }
+                        else if(firstChar == (byte) 'p')
+                        {
+                            reader.Read();
+                            var start = (int) reader.TokenStartIndex;
+                            reader.Skip();
+                            var end = (int) reader.TokenStartIndex;
+                            paramsSlice = new ReadOnlySequence<byte>(arr).Slice(start, end - start);
+                        }
+                    }
+                    else if(nameLength == 2)
+                    {
+                        reader.Read();
+                        id = ReadJsonRpcId(ref reader);
+                    }
+                }
+            }
+        }
+
+        if(method == null) return null;
+
+        return new JsonRpcRequest
+        {
+            Method = method,
+            Id = id,
+            Params = paramsSlice.Length > 0 ? paramsSlice : null
+        };
+    }
+
+    /// <summary>Find the first JSON object in the buffer (from first '{' to matching '}').</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static ReadOnlySequence<byte> TrimToJsonObject(ReadOnlySequence<byte> buffer)
+    {
+        // Find opening '{'
+        var reader = new SequenceReader<byte>(buffer);
+        if(!reader.TryAdvanceTo((byte) '{', false))
+            return ReadOnlySequence<byte>.Empty;
+
+        var start = reader.Position;
+        int depth = 0;
+        bool inString = false;
+        bool escape = false;
+
+        while(reader.TryPeek(out var b))
+        {
+            reader.Advance(1);
+
+            if(inString)
+            {
+                if(escape)
+                {
+                    escape = false;
+                    continue;
+                }
+                if(b == (byte) '\\')
+                {
+                    escape = true;
+                    continue;
+                }
+                if(b == (byte) '"')
+                {
+                    inString = false;
+                    continue;
+                }
+                continue;
+            }
+
+            if(b == (byte) '"')
+            {
+                inString = true;
+                continue;
+            }
+            if(b == (byte) '{')
+            {
+                depth++;
+            }
+            else if(b == (byte) '}')
+            {
+                depth--;
+                if(depth == 0)
+                {
+                    // Found matching closing brace
+                    return buffer.Slice(start, reader.Position);
+                }
+            }
+        }
+
+        return ReadOnlySequence<byte>.Empty; // Unmatched braces
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static object ReadJsonRpcId(ref Utf8JsonReader reader)
+    {
+        return reader.TokenType switch
+        {
+            JsonTokenType.Number => reader.TryGetInt64(out var i64)
+                ? i64
+                : (object) reader.GetDouble(),
+            JsonTokenType.String => reader.GetString(),
+            JsonTokenType.Null => null,
+            JsonTokenType.True => true,
+            JsonTokenType.False => false,
+            _ => null
+        };
     }
 
     /// <summary>
