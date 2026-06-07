@@ -152,10 +152,11 @@ public class Program : BackgroundService
                 : IPAddress.Any;
 
             var apiEnabled = clusterConfig.Api == null || clusterConfig.Api.Enabled;
+            var apiPort = clusterConfig.Api?.Port ?? 4000;
 
             if(apiEnabled)
             {
-                var port = clusterConfig.Api?.Port ?? 4000;
+                var port = apiPort;
                 var enableApiRateLimiting = clusterConfig.Api?.RateLimiting?.Disabled != true;
                 var apiTlsEnable = clusterConfig.Api?.Tls?.Enabled == true || !string.IsNullOrEmpty(clusterConfig.Api?.Tls?.TlsPfxFile);
 
@@ -270,7 +271,7 @@ public class Program : BackgroundService
                 });
 
                 var adminApp = adminBuilder.Build();
-                AdminPanelEndpoints.MapAdminPanel(adminApp, clusterConfig);
+                AdminPanelEndpoints.MapAdminPanel(adminApp, clusterConfig, apiPort);
 
                 logger.Info(() => $"Admin Panel listening on http://{listenAddress}:{adminPort}/admin");
                 adminPanelTask = adminApp.RunAsync();

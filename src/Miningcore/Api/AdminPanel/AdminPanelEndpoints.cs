@@ -16,33 +16,35 @@ public static class AdminPanelEndpoints
     /// <summary>
     /// Register admin routes on a standalone web application (separate port).
     /// </summary>
-    public static void MapAdminPanel(this WebApplication app, ClusterConfig clusterConfig)
+    public static void MapAdminPanel(this WebApplication app, ClusterConfig clusterConfig, int apiPort)
     {
         var cfg = clusterConfig.AdminPanel;
         if(cfg?.Enabled != true)
             return;
 
-        // Auth middleware
+        var apiBase = $"http://localhost:{apiPort}";
+
+        // Auth middleware — only protects /admin routes, not /api
         app.Use(async (ctx, next) =>
         {
-            if(!ctx.Request.Path.StartsWithSegments("/admin/login"))
+            if(ctx.Request.Path.StartsWithSegments("/admin") &&
+               !ctx.Request.Path.StartsWithSegments("/admin/login") &&
+               !IsAuthenticated(ctx, cfg))
             {
-                if(!IsAuthenticated(ctx, cfg))
-                {
-                    if(ctx.Request.Path.StartsWithSegments("/api/admin"))
-                    {
-                        ctx.Response.StatusCode = 401;
-                        await ctx.Response.WriteAsync("Unauthorized");
-                        return;
-                    }
-                    ctx.Response.Redirect("/admin/login");
-                    return;
-                }
+                ctx.Response.Redirect("/admin/login");
+                return;
             }
             await next();
         });
 
         var admin = app.MapGroup("/admin");
+
+        // Proxy API endpoints from the main host so the dashboard can fetch data
+        app.MapGet("/api/pools", async ctx => await ProxyToApi(ctx, apiBase));
+        app.MapGet("/api/pools/{**rest}", async (string rest, HttpContext ctx) => await ProxyToApi(ctx, apiBase));
+        app.MapGet("/api/blocks", async ctx => await ProxyToApi(ctx, apiBase));
+        app.MapGet("/api/admin/{**rest}", async (string rest, HttpContext ctx) => await ProxyToApi(ctx, apiBase));
+        app.MapPost("/api/admin/{**rest}", async (string rest, HttpContext ctx) => await ProxyToApi(ctx, apiBase));
 
         // === Login page (HTML) ===
         admin.MapGet("/login", () =>
@@ -150,6 +152,25 @@ public static class AdminPanelEndpoints
     {
         var hash = HMACSHA256.HashData(Encoding.UTF8.GetBytes(key), Encoding.UTF8.GetBytes(data));
         return Convert.ToHexString(hash).ToLowerInvariant();
+    }
+
+    private static readonly HttpClient apiClient = new();
+
+    private static async Task ProxyToApi(HttpContext ctx, string apiBase)
+    {
+        var url = $"{apiBase}{ctx.Request.Path}{ctx.Request.QueryString}";
+        var req = new HttpRequestMessage(new HttpMethod(ctx.Request.Method), url);
+
+        if(ctx.Request.Body.CanRead && ctx.Request.Method != "GET")
+        {
+            req.Content = new StreamContent(ctx.Request.Body);
+            req.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(ctx.Request.ContentType ?? "application/json");
+        }
+
+        using var resp = await apiClient.SendAsync(req);
+        ctx.Response.StatusCode = (int) resp.StatusCode;
+        ctx.Response.ContentType = resp.Content.Headers.ContentType?.ToString() ?? "application/json";
+        await resp.Content.CopyToAsync(ctx.Response.Body);
     }
 
     private const string LoginPageHtml = @"<!DOCTYPE html>
