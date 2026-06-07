@@ -1,5 +1,15 @@
 {
     "$schema": "https://raw.githubusercontent.com/soosho/miningcore/master/src/Miningcore/config.schema.json",
+
+    "adminPanel": {
+        "enabled": false,
+        "port": 8080,
+        "password": "",
+        "sessionTimeout": 3600,
+        "maxLoginAttempts": 5,
+        "loginBanDuration": 300
+    },
+
     "logging": {
         "level": "info",
         "enableConsoleLog": true,
@@ -50,78 +60,43 @@
         "enabled": true,
         "listenAddress": "*",
         "port": 4000,
-        "metricsIpWhitelist": [],
         "rateLimiting": {
-            "disabled": true,
-            "rules": [
-                {
-                    "Endpoint": "*",
-                    "Period": "1s",
-                    "Limit": 5
-                }
-            ],
-            "ipWhitelist": [
-                ""
-            ]
-        }
+            "disabled": false,
+            "whitelist": ["127.0.0.1", "::1", "::ffff:127.0.0.1"]
+        },
+        "adminIpWhitelist": ["127.0.0.1", "::1", "::ffff:127.0.0.1"],
+        "metricsIpWhitelist": ["127.0.0.1", "::1", "::ffff:127.0.0.1"]
     },
-    "clusterName": "eu1",
-    "pools": [
-      {
+    "pools": [{
         "id": "eth1",
         "enabled": true,
         "coin": "ethereum",
-        "address": "0xF8470A06f46Ab6340f94d8E153cB9c548744546E",
-        "rewardRecipients": [
-          {
-            "type": "op",
-            "address": "0xF8470A06f46Ab6340f94d8E153cB9c548744546E",
-            "percentage": 1.0
-          }
-        ],
-        "blockRefreshInterval": 120,
+        "address": "0xbd9bf193bf6ba5bf0dc25418e96082580fb9498f",
+        "rewardRecipients": [],
+        "blockRefreshInterval": 1000,
+        "jobRebroadcastTimeout": 10,
         "clientConnectionTimeout": 600,
         "banning": {
-          "enabled": true,
-          "time": 600,
-          "invalidPercent": 50,
-          "checkThreshold": 50
+            "enabled": true,
+            "time": 600,
+            "invalidPercent": 50,
+            "checkThreshold": 50
         },
         "ports": {
-          "4073": {
-            "name": "GPU-SMALL",
-            "listenAddress": "*",
-            "difficulty": 0.1,
-            "varDiff": {
-              "minDiff": 0.1,
-              "maxDiff": null,
-              "targetTime": 15,
-              "retargetTime": 90,
-              "variancePercent": 30
+            "3032": {
+                "listenAddress": "0.0.0.0",
+                "difficulty": 1,
+                "name": "Test Port"
             }
-          }
         },
-        "chainTypeOverride": "Ethereum",
-        "daemons": [
-          {
+        "daemons": [{
             "host": "127.0.0.1",
             "port": 8545,
-            "user": "",
-            "password": ""
-          }
-        ],
+            "user": "user",
+            "password": "password"
+        }],
         "paymentProcessing": {
-            "enabled": true,
-            "minimumPayment": 1,
-            "payoutScheme": "PPLNS",
-            "payoutSchemeConfig": {
-                "factor": 0.5
-            },
-            "gas": 21000,
-            "maxFeePerGas": 50000000000,
-            "keepUncles": false,
-            "keepTransactionFees": false
+            "enabled": false
         }
-      }
-    ]
+    }]
 }

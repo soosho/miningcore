@@ -932,6 +932,12 @@ public partial class AdminPanelConfig
     public bool Enabled { get; set; }
 
     /// <summary>
+    /// Port the admin panel listens on. Must be different from the API port.
+    /// Default: 8080
+    /// </summary>
+    public int Port { get; set; } = 8080;
+
+    /// <summary>
     /// Password required to access the admin panel.
     /// Leave empty to disable password auth (rely on IP whitelist only)
     /// </summary>

@@ -14,19 +14,18 @@ public static class AdminPanelEndpoints
     private static readonly ConcurrentDictionary<string, (int failures, DateTime? bannedUntil)> loginTracker = new();
 
     /// <summary>
-    /// Register auth middleware. Called before UseRouting.
+    /// Register admin routes on a standalone web application (separate port).
     /// </summary>
-    public static void UseAdminPanelAuth(IApplicationBuilder app, ClusterConfig clusterConfig)
+    public static void MapAdminPanel(this WebApplication app, ClusterConfig clusterConfig)
     {
         var cfg = clusterConfig.AdminPanel;
         if(cfg?.Enabled != true)
             return;
 
-        // Auth middleware for /admin/* and /api/admin/*
+        // Auth middleware
         app.Use(async (ctx, next) =>
         {
-            if(ctx.Request.Path.StartsWithSegments("/admin") &&
-               !ctx.Request.Path.StartsWithSegments("/admin/login"))
+            if(!ctx.Request.Path.StartsWithSegments("/admin/login"))
             {
                 if(!IsAuthenticated(ctx, cfg))
                 {
@@ -42,16 +41,6 @@ public static class AdminPanelEndpoints
             }
             await next();
         });
-    }
-
-    /// <summary>
-    /// Register admin routes. Called inside UseEndpoints.
-    /// </summary>
-    public static void MapAdminPanel(this IEndpointRouteBuilder app, ClusterConfig clusterConfig)
-    {
-        var cfg = clusterConfig.AdminPanel;
-        if(cfg?.Enabled != true)
-            return;
 
         var admin = app.MapGroup("/admin");
 

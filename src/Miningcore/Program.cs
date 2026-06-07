@@ -146,12 +146,15 @@ public class Program : BackgroundService
                     services.AddHostedService<Program>();
                 });
 
-            if(clusterConfig.Api == null || clusterConfig.Api.Enabled)
-            {
-                var address = clusterConfig.Api?.ListenAddress != null
-                    ? (clusterConfig.Api.ListenAddress != "*" ? IPAddress.Parse(clusterConfig.Api.ListenAddress) : IPAddress.Any)
-                    : IPAddress.Parse("127.0.0.1");
+            // Resolve listen address (used by both API and admin panel)
+            var listenAddress = clusterConfig.Api?.ListenAddress != null
+                ? (clusterConfig.Api.ListenAddress != "*" ? IPAddress.Parse(clusterConfig.Api.ListenAddress) : IPAddress.Any)
+                : IPAddress.Any;
 
+            var apiEnabled = clusterConfig.Api == null || clusterConfig.Api.Enabled;
+
+            if(apiEnabled)
+            {
                 var port = clusterConfig.Api?.Port ?? 4000;
                 var enableApiRateLimiting = clusterConfig.Api?.RateLimiting?.Disabled != true;
                 var apiTlsEnable = clusterConfig.Api?.Tls?.Enabled == true || !string.IsNullOrEmpty(clusterConfig.Api?.Tls?.TlsPfxFile);
@@ -204,7 +207,7 @@ public class Program : BackgroundService
                     })
                     .UseKestrel(options =>
                     {
-                        options.Listen(address, port, listenOptions =>
+                        options.Listen(listenAddress, port, listenOptions =>
                         {
                             if(apiTlsEnable)
                                 listenOptions.UseHttps(clusterConfig.Api.Tls.TlsPfxFile, clusterConfig.Api.Tls.TlsPfxPassword);
@@ -238,18 +241,15 @@ public class Program : BackgroundService
 
                         app.UseMiddleware<ApiRequestMetricsMiddleware>();
 
-                        AdminPanelEndpoints.UseAdminPanelAuth(app, clusterConfig);
-
                         app.UseRouting();
                         app.UseEndpoints(endpoints =>
                         {
                             endpoints.MapMiningcoreApi();
-                            endpoints.MapAdminPanel(clusterConfig);
                         });
                     });
 
-                    logger.Info(() => $"Prometheus Metrics API listening on http{(apiTlsEnable ? "s" : "")}://{address}:{port}/metrics");
-                    logger.Info(() => $"WebSocket Events streaming on ws{(apiTlsEnable ? "s" : "")}://{address}:{port}/notifications");
+                    logger.Info(() => $"Prometheus Metrics API listening on http{(apiTlsEnable ? "s" : "")}://{listenAddress}:{port}/metrics");
+                    logger.Info(() => $"WebSocket Events streaming on ws{(apiTlsEnable ? "s" : "")}://{listenAddress}:{port}/notifications");
                 });
             }
 
@@ -257,7 +257,26 @@ public class Program : BackgroundService
 
             await PreFlightChecks(host.Services);
 
-            await host.RunAsync();
+            // Start admin panel on a separate port if enabled
+            var adminPanelTask = Task.CompletedTask;
+            if(clusterConfig.AdminPanel?.Enabled == true)
+            {
+                var adminPort = clusterConfig.AdminPanel.Port;
+                var adminBuilder = WebApplication.CreateBuilder();
+
+                adminBuilder.WebHost.UseKestrel(options =>
+                {
+                    options.Listen(listenAddress, adminPort);
+                });
+
+                var adminApp = adminBuilder.Build();
+                AdminPanelEndpoints.MapAdminPanel(adminApp, clusterConfig);
+
+                logger.Info(() => $"Admin Panel listening on http://{listenAddress}:{adminPort}/admin");
+                adminPanelTask = adminApp.RunAsync();
+            }
+
+            await Task.WhenAny(host.RunAsync(), adminPanelTask);
         }
 
         catch(PoolStartupException ex)
