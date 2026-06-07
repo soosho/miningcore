@@ -47,6 +47,7 @@ using Miningcore.Persistence;
 using Miningcore.Persistence.Dummy;
 using Miningcore.Persistence.Postgres;
 using Miningcore.Persistence.Postgres.Repositories;
+using Miningcore.Telemetry;
 using Miningcore.Util;
 using NBitcoin.Zcash;
 using Newtonsoft.Json;
@@ -60,6 +61,8 @@ using NLog.Extensions.Hosting;
 using NLog.Extensions.Logging;
 using NLog.Layouts;
 using NLog.Targets;
+using NLog.Targets.Wrappers;
+using OpenTelemetry.Trace;
 using Prometheus;
 using WebSocketManager;
 using ILogger = NLog.ILogger;
@@ -134,6 +137,7 @@ public class Program : BackgroundService
                 {
                     services.AddHttpClient();
                     services.AddMemoryCache();
+                    services.AddMiningcoreTelemetry();
 
                     ConfigureBackgroundServices(services);
 
@@ -759,6 +763,9 @@ public class Program : BackgroundService
                     loggingConfig.AddRule(level, NLog.LogLevel.Fatal, target, poolConfig.Id);
                 }
             }
+
+            // Wrap file targets with async wrappers to prevent disk I/O from blocking threads
+            WrapFileTargetsWithAsync(loggingConfig);
         }
 
         LogManager.Configuration = loggingConfig;
@@ -772,6 +779,40 @@ public class Program : BackgroundService
             return name;
 
         return Path.Combine(config.LogBaseDirectory, name);
+    }
+
+    /// <summary>
+    /// Wraps all FileTarget instances with AsyncTargetWrapper to prevent synchronous
+    /// disk writes from blocking worker threads. Dropped logs on overflow are safer
+    /// than threadpool starvation under I/O pressure.
+    /// </summary>
+    private static void WrapFileTargetsWithAsync(LoggingConfiguration config)
+    {
+        var targetsToWrap = config.AllTargets
+            .Where(t => t is FileTarget && t is not AsyncTargetWrapper)
+            .ToList();
+
+        foreach(var fileTarget in targetsToWrap.Cast<FileTarget>())
+        {
+            var wrapper = new AsyncTargetWrapper(fileTarget)
+            {
+                Name = fileTarget.Name,
+                QueueLimit = 10000,
+                OverflowAction = AsyncTargetWrapperOverflowAction.Discard,
+                BatchSize = 100,
+                TimeToSleepBetweenBatches = 200
+            };
+
+            // Replace original rules pointing to this target with the async wrapper
+            foreach(var rule in config.LoggingRules.Where(r => r.Targets.Contains(fileTarget)).ToList())
+            {
+                rule.Targets.Remove(fileTarget);
+                rule.Targets.Add(wrapper);
+            }
+
+            config.RemoveTarget(fileTarget.Name);
+            config.AddTarget(wrapper.Name, wrapper);
+        }
     }
 
     private static async Task PreFlightChecks(IServiceProvider services)

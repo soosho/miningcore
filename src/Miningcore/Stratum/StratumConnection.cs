@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Diagnostics;
 using System.IO.Pipelines;
 using System.Net;
 using System.Net.Security;
@@ -18,6 +19,7 @@ using Miningcore.Configuration;
 using Miningcore.Extensions;
 using Miningcore.JsonRpc;
 using Miningcore.Mining;
+using Miningcore.Telemetry;
 using Miningcore.Time;
 using Miningcore.Util;
 using Newtonsoft.Json;
@@ -383,6 +385,13 @@ public class StratumConnection
 
         if(request == null)
             throw new Newtonsoft.Json.JsonException("Unable to deserialize request");
+
+        // Trace span — zero overhead when sampling is off (AlwaysOffSampler returns null immediately)
+        using var activity = MiningcoreTelemetry.ActivitySource.HasListeners()
+            ? MiningcoreTelemetry.ActivitySource.StartActivity("stratum.request")
+            : null;
+        activity?.SetTag("stratum.method", request.Method);
+        activity?.SetTag("stratum.connection_id", ConnectionId);
 
         await onRequestAsync(this, request, ct);
     }
