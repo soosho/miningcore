@@ -9,18 +9,26 @@ MCCE is a modernized, actively maintained fork of [Miningcore](https://github.co
 | **Status** | Archived (2022) | Active |
 | **.NET Version** | .NET 6 | .NET 8 |
 | **Target OS** | Ubuntu 22.04 | Ubuntu 24.04 / Windows |
-| **API Stack** | MVC Controllers | Minimal APIs (67× faster) |
+| **API Stack** | MVC Controllers | Minimal APIs (4× faster) |
 | **Stratum Parsing** | Newtonsoft.Json | Utf8JsonReader (5.4× faster) |
 | **Memory Alloc** | 7.1 KB/request | 0.73 KB/request |
-| **Coin Support** | Same | All original coins + fixes for GCC 13 |
+| **Observability** | Prometheus only | Prometheus + OpenTelemetry tracing |
+| **DB Setup** | Manual SQL per pool | Auto-partitioning on pool start |
+| **Logging** | Blocking I/O | Non-blocking async wrappers |
+| **Coin Support** | Same | All original coins + GCC 13 fixes |
 
 ## Documentation
 
 - [Full Changelog](changelog.md) — every change since the fork
-- [Optimization: REST API Migration](optimizations/01-api-minimal-migration.md)
-- [Optimization: Stratum JSON Parsing](optimizations/02-stratum-utf8reader.md)
-- [Benchmark: Stratum Processing](benchmarks/stratum-comparison.md)
-- [Benchmark: API Throughput](benchmarks/api-comparison.md)
+- **Optimizations:**
+  - [REST API → Minimal APIs](optimizations/01-api-minimal-migration.md)
+  - [Stratum JSON Parsing](optimizations/02-stratum-utf8reader.md)
+  - [OpenTelemetry Tracing + NLog Async](optimizations/03-opentelemetry-nlog-async.md)
+- **Features:**
+  - [Auto Share Table Partitioning](features/auto-partitioning.md)
+- **Benchmarks:**
+  - [Stratum Processing](benchmarks/stratum-comparison.md)
+  - [API Throughput](benchmarks/api-comparison.md)
 
 ## Quick Start
 
