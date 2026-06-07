@@ -21,7 +21,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IO;
 using Miningcore.Api;
-using Miningcore.Api.Controllers;
 using Miningcore.Api.Middlewares;
 using Miningcore.Api.Responses;
 using Miningcore.Configuration;
@@ -172,25 +171,19 @@ public class Program : BackgroundService
                             services.AddSingleton<IProcessingStrategy, AsyncKeyLockProcessingStrategy>();
                         }
 
-                        // Controllers
-                        services.AddSingleton<PoolApiController, PoolApiController>();
-                        services.AddSingleton<AdminApiController, AdminApiController>();
-
-                        // MVC
+                        // API
+                        services.AddRouting();
                         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
-                        services.AddMvc(options =>
+                        services.ConfigureHttpJsonOptions(options =>
                         {
-                            options.EnableEndpointRouting = false;
-                        })
-                        .AddControllersAsServices()
-                        .AddJsonOptions(options =>
-                        {
-                            options.JsonSerializerOptions.WriteIndented = true;
+                            options.SerializerOptions.WriteIndented = true;
 
                             if(!clusterConfig.Api.LegacyNullValueHandling)
-                                options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+                                options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
                         });
+
+                        services.AddEndpointsApiExplorer();
 
                         // NSwag
                         #if DEBUG
@@ -240,7 +233,11 @@ public class Program : BackgroundService
 
                         app.UseMiddleware<ApiRequestMetricsMiddleware>();
 
-                        app.UseMvc();
+                        app.UseRouting();
+                        app.UseEndpoints(endpoints =>
+                        {
+                            endpoints.MapMiningcoreApi();
+                        });
                     });
 
                     logger.Info(() => $"Prometheus Metrics API listening on http{(apiTlsEnable ? "s" : "")}://{address}:{port}/metrics");
