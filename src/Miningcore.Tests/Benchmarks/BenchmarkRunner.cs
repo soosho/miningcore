@@ -18,6 +18,7 @@ public class Benchmarks
     }
 
     [Fact]
+    [Trait("Category", "Benchmark")]
     public void Run_Benchmarks()
     {
         var logger = new AccumulationLogger();
