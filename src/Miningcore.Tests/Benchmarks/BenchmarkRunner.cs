@@ -17,7 +17,7 @@ public class Benchmarks
         this.output = output;
     }
 
-    [Fact]
+    [Fact(Skip = "BenchmarkDotNet child processes cause VSTestTask to fail on CI")]
     [Trait("Category", "Benchmark")]
     public void Run_Benchmarks()
     {
