@@ -1,5 +1,21 @@
 # Changelog
 
+## June 2026 — Merged Mining (AuxPoW) — private
+
+LTC+DOGE merged mining via AuxPoW. Miners point hashrate at Litecoin, the pool automatically submits blocks on both chains. Includes miner aux address mapping (LTC address → DOGE payout address), dual-daemon job manager, CAuxPow binary serializer reverse-engineered from Dogecoin Core, and full API integration. This is a private feature — available for licensing.
+
+See: [Merged Mining (private repo)](https://github.com/soosho/miningcore-merged), [Feature Doc](features/merged-mining.md), [Example Config](examples/merged_mining_litecoin_dogecoin.json)
+
+## June 2026 — Config hot-reload
+
+Edit `config.json` to add, remove, or change pools without restarting miningcore. FileSystemWatcher detects writes, diffs pool configs, stops removed pools, starts new ones. Unchanged pools stay online — miners keep their connections. Only pool-level config is hot-reloaded; top-level settings (API port, logging) still need a restart.
+
+See: [Feature: Config Hot-Reload](features/config-hot-reload.md)
+
+## June 2026 — Stratum JSON parsing robustness fix
+
+Added Newtonsoft fallback for non-standard miner JSON (cpuminer-opt, older firmware). Utf8JsonReader fast path runs first; on parse failure, the request is re-parsed via Newtonsoft string-based deserialization. Also validates the parsed params slice before passing it to pool handlers to catch slicing errors from the fast parser.
+
 ## June 2026 — Built-in web admin panel
 
 Added a password-protected web dashboard served by miningcore itself. Overview, pools, miners, blocks, and settings tabs. HMAC-signed cookies for auth, login attempt tracking with IP ban, configurable timeout. No separate server needed — just enable it in config.json and go to /admin/login. Built to be extensible with a modular tab system for future controls.
