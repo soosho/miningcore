@@ -22,16 +22,12 @@ jobs:
       uses: actions/setup-dotnet@v2
       with:
         dotnet-version: 8.0.x
-    - name: Build native libraries
-      run: |
-        cd src/Miningcore
-        mkdir -p bin/Release/net8.0
-        chmod +x build-libs-linux.sh ../Native/check_cpu.sh
-        ./build-libs-linux.sh bin/Release/net8.0/
     - name: Restore dependencies
       run: dotnet restore src
-    - name: Build
-      run: dotnet build -c Release --no-restore src
+    - name: Build & Native Libs
+      run: |
+        chmod +x src/Miningcore/build-libs-linux.sh src/Native/check_cpu.sh
+        dotnet build -c Release --no-restore src
     - name: Copy native libs to test output
       run: cp src/Miningcore/bin/Release/net8.0/*.so src/Miningcore.Tests/bin/Release/net8.0/ 2>/dev/null || true
     - name: Test
