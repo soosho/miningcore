@@ -49,8 +49,6 @@ public static class ApiEndpoints
 
         api.MapGet("/health-check", () => Results.Text("👍"));
 
-        // -- Hidden MCCE fingerprint endpoint (not in original miningcore) --
-        // Used to detect whether a pool is running MCCE vs original miningcore.
         api.MapGet("/meta", () => Results.Json(new
         {
             generator = "Miningcore Community Edition",

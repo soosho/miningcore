@@ -114,7 +114,8 @@ public class Program : BackgroundService
             Logo();
 
             isShareRecoveryMode = shareRecoveryOption.HasValue();
-            clusterConfig = ReadConfig(configFileOption.Value());
+            configFilePath = configFileOption.Value();
+            clusterConfig = ReadConfig(configFilePath);
 
             ValidateConfig();
 
@@ -141,6 +142,15 @@ public class Program : BackgroundService
                     services.AddMiningcoreTelemetry(clusterConfig.Logging?.OtlpEndpoint);
 
                     ConfigureBackgroundServices(services);
+
+                    services.AddSingleton<ConfigHotReloadService>(sp =>
+                        new ConfigHotReloadService(
+                            sp.GetRequiredService<IComponentContext>(),
+                            sp.GetRequiredService<IHostApplicationLifetime>(),
+                            pools,
+                            clusterConfig,
+                            configFilePath));
+                    services.AddHostedService(sp => sp.GetRequiredService<ConfigHotReloadService>());
 
                     // MUST BE THE LAST REGISTERED HOSTED SERVICE!
                     services.AddHostedService<Program>();
@@ -241,9 +251,6 @@ public class Program : BackgroundService
                         app.UseMetricServer();
 
                         app.UseMiddleware<ApiRequestMetricsMiddleware>();
-
-                        // MCCE fingerprint — hidden response header for fork detection
-                        // (not present in original miningcore)
                         app.UseMiddleware<MCCEFingerprintMiddleware>();
 
                         app.UseRouting();
@@ -372,6 +379,7 @@ public class Program : BackgroundService
     private static ClusterConfig clusterConfig;
     private static readonly ConcurrentDictionary<string, IMiningPool> pools = new();
     private static readonly AdminGcStats gcStats = new();
+    private static string configFilePath; // stored for hot-reload
 
     public Program(IComponentContext container, IHostApplicationLifetime hal)
     {
