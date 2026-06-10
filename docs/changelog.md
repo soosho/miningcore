@@ -12,6 +12,12 @@ Edit `config.json` to add, remove, or change pools without restarting miningcore
 
 See: [Feature: Config Hot-Reload](features/config-hot-reload.md)
 
+## June 2026 — Stratum connection hardening
+
+Pre-accept IP throttle (5 conn/s), ban escalation (10s → permanent), configurable TCP backlog per port. Flooded connections are dropped at the socket layer before they touch the thread pool. Loopback exempt.
+
+See: [Feature: Connection Hardening](features/connection-hardening.md)
+
 ## June 2026 — Stratum JSON parsing robustness fix
 
 Added Newtonsoft fallback for non-standard miner JSON (cpuminer-opt, older firmware). Utf8JsonReader fast path runs first; on parse failure, the request is re-parsed via Newtonsoft string-based deserialization. Also validates the parsed params slice before passing it to pool handlers to catch slicing errors from the fast parser.

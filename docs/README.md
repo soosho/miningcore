@@ -29,6 +29,7 @@ MCCE is a modernized, actively maintained fork of [Miningcore](https://github.co
   - [DB Index Improvements](features/db-indexes.md)
   - [Built-in Admin Panel](features/admin-panel.md)
   - [Config Hot-Reload](features/config-hot-reload.md)
+  - [Connection Hardening](features/connection-hardening.md)
   - [Merged Mining (AuxPoW)](https://github.com/soosho/miningcore-merged) — private, contact for licensing
   - [Merged Mining (AuxPoW) — Documentation](features/merged-mining.md)
 - **Benchmarks:**
