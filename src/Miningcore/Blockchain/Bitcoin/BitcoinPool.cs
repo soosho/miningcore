@@ -448,7 +448,7 @@ public class BitcoinPool : PoolBase
     public override double HashrateFromShares(double shares, double interval)
     {
         var multiplier = BitcoinConstants.Pow2x32;
-        var result = shares * multiplier / interval;
+        var result = shares * multiplier / interval * 1.1;
 
         if(coin.HashrateMultiplier.HasValue)
             result *= coin.HashrateMultiplier.Value;

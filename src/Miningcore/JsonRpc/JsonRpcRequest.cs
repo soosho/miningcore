@@ -1,5 +1,6 @@
 using System.Buffers;
 using System.Collections.Generic;
+using System.Text;
 using System.Text.Json;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -53,7 +54,19 @@ public class JsonRpcRequest<T>
             return token.ToObject<TParam>();
 
         if(Params is ReadOnlySequence<byte> ros)
-            return FastDeserializeParams<TParam>(ros);
+        {
+            try
+            {
+                return FastDeserializeParams<TParam>(ros);
+            }
+            catch
+            {
+                // Fast path failed — fall back to string-based Newtonsoft parse
+                var arr = ros.ToArray();
+                var str = Encoding.UTF8.GetString(arr);
+                return JsonConvert.DeserializeObject<TParam>(str);
+            }
+        }
 
         return (TParam) Params;
     }

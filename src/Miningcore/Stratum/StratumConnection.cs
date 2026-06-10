@@ -380,11 +380,37 @@ public class StratumConnection
         Func<StratumConnection, JsonRpcRequest, CancellationToken, Task> onRequestAsync,
         ReadOnlySequence<byte> lineBuffer)
     {
-        // Fast path: parse directly from bytes using Utf8JsonReader (no string allocations)
-        var request = FastParseRequest(lineBuffer);
+        JsonRpcRequest request = null;
+
+        try
+        {
+            request = FastParseRequest(lineBuffer);
+        }
+        catch
+        {
+        }
 
         if(request == null)
-            throw new Newtonsoft.Json.JsonException("Unable to deserialize request");
+        {
+            var line = Encoding.UTF8.GetString(lineBuffer.ToArray()).Trim();
+            request = Newtonsoft.Json.JsonConvert.DeserializeObject<JsonRpcRequest>(line);
+        }
+
+        else
+        {
+            // Fast parse succeeded but may have produced a corrupt params slice.
+            // Test-parse the params. If it fails, re-parse the whole request
+            // with Newtonsoft (full string-based parse with no slicing errors).
+            try
+            {
+                _ = request.ParamsAs<string[]>();
+            }
+            catch
+            {
+                var line = Encoding.UTF8.GetString(lineBuffer.ToArray()).Trim();
+                request = Newtonsoft.Json.JsonConvert.DeserializeObject<JsonRpcRequest>(line);
+            }
+        }
 
         // Trace span — StartActivity returns null immediately when no OTel SDK is
         // registered (zero overhead). When OTel SDK is present, it handles sampling.
