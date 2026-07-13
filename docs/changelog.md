@@ -81,7 +81,7 @@ Upgraded codebase to C# 12 idioms: replaced mutable dictionaries with `FrozenDic
 
 ## February 2026 — Branding & .NET 8 baseline
 
-Forked from `blackmennewstyle/miningcore`. Rebranded as Miningcore Community Edition (MCCE). Bumped target framework to `net8.0`, upgraded all NuGet dependencies, updated build scripts for Ubuntu 24.04. Fixed nullability warnings, cleaned up console output formatting.
+Forked from `blackmennewstyle/miningcore`. Rebranded as Miningcore Community Edition (MCCE). Bumped target framework to `net9.0`, upgraded all NuGet dependencies, updated build scripts for Ubuntu 24.04. Fixed nullability warnings, cleaned up console output formatting.
 
 ## 2022 — Original Miningcore archived
 

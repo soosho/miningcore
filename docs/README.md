@@ -47,7 +47,7 @@ cd miningcore
 ./build-ubuntu-24.04.sh
 
 # Run
-cd src/Miningcore/bin/Release/net8.0
+cd src/Miningcore/bin/Release/net9.0
 ./Miningcore -c config.json
 ```
 
