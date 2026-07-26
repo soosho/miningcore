@@ -1,13 +1,13 @@
 using System.Collections.Concurrent;
 using System.Globalization;
 using System.Text;
-using Miningcore.Blockchain.Bitcoin.Configuration;
-using Miningcore.Blockchain.Bitcoin.DaemonResponses;
-using Miningcore.Configuration;
-using Miningcore.Crypto;
-using Miningcore.Crypto.Hashing.Algorithms;
-using Miningcore.Extensions;
-using Miningcore.Stratum;
+using .Blockchain.Bitcoin.Configuration;
+using .Blockchain.Bitcoin.DaemonResponses;
+using .Configuration;
+using .Crypto;
+using .Crypto.Hashing.Algorithms;
+using .Extensions;
+using .Stratum;
 using Miningcore.Time;
 using Miningcore.Util;
 using NBitcoin;
@@ -864,7 +864,7 @@ public class BitcoinJob
         JobId = jobId;
 
         var coinbaseString = !string.IsNullOrEmpty(cc.PaymentProcessing?.CoinbaseString) ?
-            cc.PaymentProcessing?.CoinbaseString.Trim() : "Miningcore";
+            cc.PaymentProcessing?.CoinbaseString.Trim() : "Kriptokyng Pool";
 
         scriptSigFinalBytes = new Script(Op.GetPushOp(Encoding.UTF8.GetBytes(coinbaseString))).ToBytes();
 
