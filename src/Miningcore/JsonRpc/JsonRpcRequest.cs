@@ -55,17 +55,25 @@ public class JsonRpcRequest<T>
 
         if(Params is ReadOnlySequence<byte> ros)
         {
-            try
+            // The fast path only implements string[] (bitcoin-family stratum params).
+            // Every other TParam is a JSON object whose DTO carries Newtonsoft
+            // [JsonProperty] attributes. System.Text.Json ignores those attributes and
+            // is case-sensitive, so it would return an object with all-null properties
+            // WITHOUT throwing - defeating the catch below. Route those to Newtonsoft.
+            if(typeof(TParam) == typeof(string[]))
             {
-                return FastDeserializeParams<TParam>(ros);
+                try
+                {
+                    return FastDeserializeParams<TParam>(ros);
+                }
+                catch
+                {
+                    // fall through to the Newtonsoft parse below
+                }
             }
-            catch
-            {
-                // Fast path failed — fall back to string-based Newtonsoft parse
-                var arr = ros.ToArray();
-                var str = Encoding.UTF8.GetString(arr);
-                return JsonConvert.DeserializeObject<TParam>(str);
-            }
+
+            var str = Encoding.UTF8.GetString(ros.ToArray());
+            return JsonConvert.DeserializeObject<TParam>(str);
         }
 
         return (TParam) Params;
@@ -115,8 +123,7 @@ public class JsonRpcRequest<T>
             return list.ToArray() as TParam;
         }
 
-        // Fallback: deserialize from bytes using System.Text.Json
-        var bytes = ros.ToArray();
-        return System.Text.Json.JsonSerializer.Deserialize<TParam>(bytes);
+        // Unreachable: callers gate on typeof(TParam) == typeof(string[]).
+        return null;
     }
 }
