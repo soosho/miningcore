@@ -216,3 +216,6 @@ config.json
 /*/*/*/*/*/*/*/*/*/*.o
 .actrc
 
+pools.json
+*.o
+*.so
