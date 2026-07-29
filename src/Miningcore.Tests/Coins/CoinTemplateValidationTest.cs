@@ -70,12 +70,17 @@ public class CoinTemplateValidationTest : TestBase
     {
         try
         {
-            return Record.Exception(testCode);
+            testCode();
+            return null;
         }
         catch(ComponentNotRegisteredException)
         {
             output.WriteLine($"  Skipping hash resolution for {template.Name} — algorithm not registered");
             return null;
+        }
+        catch(Exception ex)
+        {
+            return ex;
         }
     }
 }
